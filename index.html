@@ -420,7 +420,7 @@ function EntryModal({ dk, editIdx, entry, categories, catColors, onAddCategory, 
         <div style={S.modalHeader}><span style={S.modalDate}>{label}</span><button style={S.modalClose} onClick={onClose}>✕</button></div>
         <div style={S.modalField}>
           <label style={S.modalLabel}>金額</label>
-          <div style={S.amountRow}><input style={S.amountInput} type="number" inputMode="numeric" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0" autoFocus /></div>
+          <div style={S.amountRow}><input style={S.amountInput} type="text" inputMode="decimal" pattern="[\-]?[0-9]*\.?[0-9]*" value={amount} onChange={(e) => { const v = e.target.value; if (v === "" || v === "-" || /^-?\d*\.?\d*$/.test(v)) setAmount(v); }} placeholder="0" autoFocus /></div>
           {valid && <div style={{ ...S.winLoseBadge, background: wl === "win" ? "#E8F5E9" : "#FDE8E8", color: winLoseColor(wl) }}>{wl === "win" ? "▲ Win" : "▼ Lose"}</div>}
         </div>
         <div style={S.modalField}>
