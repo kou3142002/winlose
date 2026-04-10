@@ -405,13 +405,19 @@ function CategorySettings({ categories, catColors, setCategories, setCatColors, 
 
 // ─── Entry Modal ───────────────────────────────────
 function EntryModal({ dk, editIdx, entry, categories, catColors, onAddCategory, onSave, onDelete, onClose }) {
-  const [amount, setAmount] = useState(entry?.amount?.toString() || "");
+  const initAmount = entry?.amount != null ? Math.abs(entry.amount).toString() : "";
+  const initSign = entry?.amount != null && entry.amount < 0 ? "lose" : "win";
+  const [absAmount, setAbsAmount] = useState(initAmount);
+  const [sign, setSign] = useState(initSign);
   const [memo, setMemo] = useState(entry?.memo || "");
   const [category, setCategory] = useState(entry?.category || "");
   const [showNewCat, setShowNewCat] = useState(false);
   const [newCatName, setNewCatName] = useState("");
   const isEdit = editIdx !== null;
-  const d = new Date(dk); const label = `${fmtYMD(dk)} (${DOW_EN[d.getDay()]})`; const numAmount = Number(amount); const valid = amount && !isNaN(numAmount); const wl = valid ? getWinLose(numAmount) : null;
+  const d = new Date(dk); const label = `${fmtYMD(dk)} (${DOW_EN[d.getDay()]})`;
+  const numAbs = Number(absAmount);
+  const valid = absAmount && !isNaN(numAbs) && numAbs > 0;
+  const finalAmount = valid ? (sign === "lose" ? -numAbs : numAbs) : 0;
   const handleAddNewCat = () => { const v = newCatName.trim(); if (v) { onAddCategory(v); setCategory(v); setNewCatName(""); setShowNewCat(false); } };
 
   return (
@@ -420,8 +426,13 @@ function EntryModal({ dk, editIdx, entry, categories, catColors, onAddCategory, 
         <div style={S.modalHeader}><span style={S.modalDate}>{label}</span><button style={S.modalClose} onClick={onClose}>✕</button></div>
         <div style={S.modalField}>
           <label style={S.modalLabel}>金額</label>
-          <div style={S.amountRow}><input style={S.amountInput} type="text" inputMode="decimal" pattern="[\-]?[0-9]*\.?[0-9]*" value={amount} onChange={(e) => { const v = e.target.value; if (v === "" || v === "-" || /^-?\d*\.?\d*$/.test(v)) setAmount(v); }} placeholder="0" autoFocus /></div>
-          {valid && <div style={{ ...S.winLoseBadge, background: wl === "win" ? "#E8F5E9" : "#FDE8E8", color: winLoseColor(wl) }}>{wl === "win" ? "▲ Win" : "▼ Lose"}</div>}
+          <div style={S.amountRow}>
+            <button style={{ ...S.signToggle, background: sign === "win" ? "#4FC4A0" : "#E8735A" }} onClick={() => setSign(sign === "win" ? "lose" : "win")}>
+              {sign === "win" ? "＋" : "ー"}
+            </button>
+            <input style={S.amountInput} type="number" inputMode="numeric" value={absAmount} onChange={(e) => { const v = e.target.value; if (v === "" || /^\d*$/.test(v)) setAbsAmount(v); }} placeholder="0" autoFocus />
+          </div>
+          {valid && <div style={{ ...S.winLoseBadge, background: sign === "win" ? "#E8F5E9" : "#FDE8E8", color: sign === "win" ? "#4FC4A0" : "#E8735A" }}>{sign === "win" ? "▲ Win" : "▼ Lose"}</div>}
         </div>
         <div style={S.modalField}>
           <label style={S.modalLabel}>カテゴリ</label>
@@ -436,7 +447,7 @@ function EntryModal({ dk, editIdx, entry, categories, catColors, onAddCategory, 
         <div style={S.modalField}><label style={S.modalLabel}>メモ</label><input style={S.memoInput} value={memo} onChange={(e) => setMemo(e.target.value)} placeholder="メモを入力（任意）" /></div>
         <div style={S.modalActions}>
           {isEdit && <button style={S.deleteBtn} onClick={onDelete}>削除</button>}
-          <button style={{ ...S.saveBtn, ...(valid ? {} : { opacity: 0.4 }) }} onClick={() => valid && onSave({ amount: numAmount, memo, category: category || "未分類", win_lose: getWinLose(numAmount) })}>{isEdit ? "更新" : "記録する"}</button>
+          <button style={{ ...S.saveBtn, ...(valid ? {} : { opacity: 0.4 }) }} onClick={() => valid && onSave({ amount: finalAmount, memo, category: category || "未分類", win_lose: sign })}>{isEdit ? "更新" : "記録する"}</button>
         </div>
       </div>
     </div>
@@ -566,7 +577,8 @@ const S = {
   modalClose: { border: "none", background: "#F0EEE8", width: 32, height: 32, borderRadius: "50%", fontSize: 14, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: "#666" },
   modalField: { marginBottom: 18 },
   modalLabel: { fontSize: 12, fontWeight: 600, color: "#888", marginBottom: 6, display: "block", letterSpacing: 0.5 },
-  amountRow: { display: "flex", alignItems: "center", gap: 4, background: "#E4F3FF", borderRadius: 12, padding: "10px 14px" },
+  amountRow: { display: "flex", alignItems: "center", gap: 8, background: "#E4F3FF", borderRadius: 12, padding: "10px 14px" },
+  signToggle: { width: 40, height: 40, borderRadius: "50%", border: "none", color: "#fff", fontSize: 20, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, transition: "background 0.15s" },
   amountInput: { flex: 1, border: "none", background: "none", fontSize: 24, fontWeight: 700, outline: "none", fontFamily: "inherit", color: "#2C2C2C" },
   winLoseBadge: { display: "inline-block", marginTop: 8, padding: "4px 12px", borderRadius: 20, fontSize: 12, fontWeight: 700 },
   catGrid: { display: "flex", flexWrap: "wrap", gap: 6 },
